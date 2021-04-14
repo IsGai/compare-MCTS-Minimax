@@ -1,7 +1,7 @@
 import aima3
 import itertools
 import functools
-from aima3.games import Game, GameState, MCTSPlayer, MiniMaxPlayer, HumanPlayer
+from aima3.games import Game, GameState, Player, MCTSPlayer, MiniMaxPlayer, HumanPlayer, RandomPlayer
 
 class TicTacToe3D(Game):
     def __init__(self, *args, **kwargs):
@@ -63,10 +63,15 @@ class TicTacToe3D(Game):
         n -= 1  # Because we counted move itself twice
         return n >= 4
 
+class HybridPlayer(Player):
+    COUNT = 0
+    def get_action(self, state, turn=1, verbose=0):
+        """A player that chooses a legal move at random."""
+        return random.choice(self.game.actions(state))
 
 def main():
     game = TicTacToe3D()
     players = [MCTSPlayer(), MiniMaxPlayer()]
-    players2 = [HumanPlayer(), HumanPlayer()]
+    players2 = [HumanPlayer(), RandomPlayer()]
     game.play_game(*players2)
 main()
