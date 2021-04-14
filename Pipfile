@@ -7,6 +7,7 @@ name = "pypi"
 pygame = "*"
 aima3 = "*"
 numpy = "*"
+scipy = "*"
 
 [dev-packages]
 
