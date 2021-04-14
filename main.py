@@ -4,6 +4,17 @@ import itertools
 import functools
 import copy
 from aima3.games import Game, GameState, Player, MCTSPlayer, MiniMaxPlayer, HumanPlayer, RandomPlayer, AlphaBetaPlayer, TicTacToe, AlphaBetaCutoffPlayer, alphabeta_cutoff_search
+import csv
+
+def write_to_csv(filename, csv_columns, data):
+    try:
+        with open(filename, 'w') as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=csv_columns)
+            writer.writeheader()
+            for i in data:
+                writer.writerow(i)
+    except IOError:
+        print("I/O error")
 
 class TicTacToe3D(Game):
     def __init__(self, *args, **kwargs):
@@ -151,7 +162,52 @@ class HybridPlayer(Player):
 
 def main():
     game = TicTacToe3D()
-    players = [HybridPlayer(), AlphaBetaCutoffPlayer()]
-    players2 = [MCTSPlayer(), RandomPlayer()]
-    game.play_game(*players)
+    # Minimax vs. MCTS
+    mcts_vs_mini = {}
+    for i in range(100):
+        players = [AlphaBetaCutoffPlayer(), MCTSPlayer()]
+        retval = game.play_game(*players)
+        if retval[0] not in mcts_vs_mini:
+            mcts_vs_mini[retval[0]] = 1
+        else:
+            mcts_vs_mini[retval] += 1
+
+    # write w/l results to csv
+    csv_file = "Minimax vs MCTS.csv"
+    csv_columns = list(mcts_vs_mini.keys())
+    write_to_csv(csv_file, csv_columns, mcts_vs_mini)
+
+    # Minimax vs. Hybrid
+    mini_vs_hybrid = {}
+    for j in range(100):
+        players = [AlphaBetaCutoffPlayer(), HybridPlayer()]
+        retval = game.play_game(*players)
+        if retval[0] not in mini_vs_hybrid:
+            mini_vs_hybrid[retval[0]] = 1
+        else:
+            mini_vs_hybrid[retval] += 1
+
+    # write w/l results to csv
+    csv_file = "Minimax vs Hybrid.csv"
+    csv_columns = list(mini_vs_hybrid.keys())
+    write_to_csv(csv_file, csv_columns, mini_vs_hybrid)
+
+    # MCTS vs. Hybrid
+    mcts_vs_hybrid = {}
+    for k in range(100):
+        players = [HybridPlayer(), MCTSPlayer()]
+        retval = game.play_game(*players)
+        if retval[0] not in mcts_vs_hybrid:
+            mcts_vs_hybrid[retval[0]] = 1
+        else:
+            mcts_vs_hybrid[retval] += 1
+
+    # write w/l results to csv
+    csv_file = "MCTS vs Hybrid.csv"
+    csv_columns = list(mcts_vs_hybrid.keys())
+    write_to_csv(csv_file, csv_columns, mcts_vs_hybrid)
+
+    # players = [HumanPlayer(), MCTSPlayer()]
+    # players2 = [MCTSPlayer(), RandomPlayer()]
+    # retval = game.play_game(*players)
 main()
