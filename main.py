@@ -18,7 +18,6 @@ def write_to_csv(filename, csv_columns, data):
         print("I/O error")
 
 def write_to_csv_l(filename, csv_columns, data):
-    print(data)
     try:
         with open(filename, 'w') as csvfile:
             writer = csv.writer(csvfile)
@@ -91,6 +90,7 @@ class TicTacToe3D(Game):
 
 
 class BenchmarkMCTSPlayer(MCTSPlayer):
+    @profile
     def get_action(self, state, turn=1, verbose=0, return_prob=0):
         t1 = time.time()
         sensible_moves = self.game.actions(state)
@@ -130,6 +130,7 @@ class BenchmarkMCTSPlayer(MCTSPlayer):
 
 class MinimaxBenchmarkPlayer(Player):
     COUNT = 0
+    @profile
     def get_action(self, state, turn=1, verbose=0):
         t1 = time.time()
         a = alphabeta_cutoff_search(state, self.game, d=4,
@@ -173,6 +174,7 @@ class HybridPlayer(Player):
         self.game = game
         self.mcts = MCTS(self.game, self.policy, self.c_puct, self.n_playout, self.temp)
 
+    @profile
     def get_action(self, state, turn=1, verbose=0, return_prob=0):
         t1 = time.time()
         sensible_moves = self.game.actions(state)
@@ -243,7 +245,7 @@ def main():
     # Minimax vs. Hybrid
     mini_vs_hybrid = {}
     data2 = []
-    for j in range(0):
+    for j in range(10):
         players = [MinimaxBenchmarkPlayer(), HybridPlayer()]
         retval = game.play_game(*players)
         if retval[0] not in mini_vs_hybrid:
@@ -260,7 +262,7 @@ def main():
     # MCTS vs. Hybrid
     mcts_vs_hybrid = {}
     data3 = []
-    for k in range(1):
+    for k in range(10):
         players = [HybridPlayer(), BenchmarkMCTSPlayer()]
         retval = game.play_game(*players)
         if retval[0] not in mcts_vs_hybrid:

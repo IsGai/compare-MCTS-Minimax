@@ -9,6 +9,7 @@ aima3 = "*"
 numpy = "*"
 scipy = "*"
 timer = "*"
+memory-profiler = "*"
 
 [dev-packages]
 
