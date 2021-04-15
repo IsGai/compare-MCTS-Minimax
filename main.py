@@ -5,6 +5,7 @@ import functools
 import copy
 from aima3.games import Game, GameState, Player, MCTSPlayer, MiniMaxPlayer, HumanPlayer, RandomPlayer, AlphaBetaPlayer, TicTacToe, AlphaBetaCutoffPlayer, alphabeta_cutoff_search
 import csv
+import time
 
 def write_to_csv(filename, csv_columns, data):
     try:
@@ -79,11 +80,52 @@ class TicTacToe3D(Game):
         return n >= 4
 
 
+class BenchmarkMCTSPlayer(MCTSPlayer):
+    def get_action(self, state, turn=1, verbose=0, return_prob=0):
+        t1 = time.time()
+        sensible_moves = self.game.actions(state)
+        all_moves = self.game.actions(self.game.initial)
+        move_probs = {key: 0.0 for key in all_moves} # the pi vector returned by MCTS as in the alphaGo Zero paper
+        if len(sensible_moves) > 0:
+            acts, probs = self.mcts.get_move_probs(state)
+            move_probs.update({key: val for (key,val) in zip(acts, probs)})
+            if self.is_selfplay:
+                # add Dirichlet Noise for exploration (needed for self-play training)
+                move_index = np.random.choice(range(len(acts)), p=0.75*probs + 0.25*np.random.dirichlet(0.3*np.ones(len(probs))))
+                move = acts[move_index]
+                self.mcts.update_with_move(move) # update the root node and reuse the search tree
+            else:
+                if verbose >= 3:
+                    for i in range(len(acts)):
+                        print("%7s" % (acts[i],), end=" | ")
+                    print()
+                    for i in range(len(probs)):
+                        print("%7.2f" % (probs[i],), end=" | ")
+                    print()
+                move_index = np.argmax(probs)
+                #move_index = np.random.choice(range(len(acts)), p=probs)
+                move = acts[move_index]
+                # reset the root node
+                self.mcts.update_with_move(-1)
+            if return_prob:
+                t2 = time.time()
+                MCTSTimeBenchmark.append(t2 - t1) 
+                return move, move_probs
+            else:
+                t2 = time.time()
+                MCTSTimeBenchmark.append(t2 - t1) 
+                return move
+        else:
+            print("WARNING: the board is full")
+
 class MinimaxBenchmarkPlayer(Player):
     COUNT = 0
     def get_action(self, state, turn=1, verbose=0):
+        t1 = time.time()
         a = alphabeta_cutoff_search(state, self.game, d=4,
                                        cutoff_test=None, eval_fn=None)
+        t2 = time.time()
+        minimaxTimeBenchmark.append(t2 - t1) 
         return a
 
 
@@ -122,6 +164,7 @@ class HybridPlayer(Player):
         self.mcts = MCTS(self.game, self.policy, self.c_puct, self.n_playout, self.temp)
 
     def get_action(self, state, turn=1, verbose=0, return_prob=0):
+        t1 = time.time()
         sensible_moves = self.game.actions(state)
         all_moves = self.game.actions(self.game.initial)
         move_probs = {key: 0.0 for key in all_moves} # the pi vector returned by MCTS as in the alphaGo Zero paper
@@ -142,17 +185,24 @@ class HybridPlayer(Player):
                         print("%7.2f" % (probs[i],), end=" | ")
                     print()
                 for prob in probs:
-                    if prob > 0.04:
-                        return alphabeta_cutoff_search(state, self.game, d=4,
+                    if prob > 0.04:   
+                        a = alphabeta_cutoff_search(state, self.game, d=4,
                                        cutoff_test=None, eval_fn=None)
+                        t2 = time.time()
+                        hybridTimeBenchmark.append(t2 - t1) 
+                        return a
                 move_index = np.argmax(probs)
                 #move_index = np.random.choice(range(len(acts)), p=probs)
                 move = acts[move_index]
                 # reset the root node
                 self.mcts.update_with_move(-1)
             if return_prob:
+                t2 = time.time()
+                hybridTimeBenchmark.append(t2 - t1) 
                 return move, move_probs
             else:
+                t2 = time.time()
+                hybridTimeBenchmark.append(t2 - t1) 
                 return move
         else:
             print("WARNING: the board is full")
@@ -162,10 +212,11 @@ class HybridPlayer(Player):
 
 def main():
     game = TicTacToe3D()
+    
     # Minimax vs. MCTS
     mcts_vs_mini = {}
-    for i in range(100):
-        players = [AlphaBetaCutoffPlayer(), MCTSPlayer()]
+    for i in range(0):
+        players = [MinimaxBenchmarkPlayer(), BenchmarkMCTSPlayer()]
         retval = game.play_game(*players)
         if retval[0] not in mcts_vs_mini:
             mcts_vs_mini[retval[0]] = 1
@@ -179,8 +230,8 @@ def main():
 
     # Minimax vs. Hybrid
     mini_vs_hybrid = {}
-    for j in range(100):
-        players = [AlphaBetaCutoffPlayer(), HybridPlayer()]
+    for j in range(1):
+        players = [MinimaxBenchmarkPlayer(), HybridPlayer()]
         retval = game.play_game(*players)
         if retval[0] not in mini_vs_hybrid:
             mini_vs_hybrid[retval[0]] = 1
@@ -194,8 +245,8 @@ def main():
 
     # MCTS vs. Hybrid
     mcts_vs_hybrid = {}
-    for k in range(100):
-        players = [HybridPlayer(), MCTSPlayer()]
+    for k in range(1):
+        players = [HybridPlayer(), BenchmarkMCTSPlayer()]
         retval = game.play_game(*players)
         if retval[0] not in mcts_vs_hybrid:
             mcts_vs_hybrid[retval[0]] = 1
@@ -207,7 +258,19 @@ def main():
     csv_columns = list(mcts_vs_hybrid.keys())
     write_to_csv(csv_file, csv_columns, mcts_vs_hybrid)
 
-    # players = [HumanPlayer(), MCTSPlayer()]
-    # players2 = [MCTSPlayer(), RandomPlayer()]
-    # retval = game.play_game(*players)
+    # write runtimes to csv
+    csv_file ="Runtimes.csv"
+    csv_columns = ["Minimax" , "MCTS", "Hybrid"]
+    runtime_list = []
+    for i in range(len(minimaxTimeBenchmark)):
+        runtime_list.append([minimaxTimeBenchmark[i], MCTSTimeBenchmark[i], hybridTimeBenchmark[i]])
+    write_to_csv(csv_file , csv_columns)
+
+    
+
+    #players = [BenchmarkMCTSPlayer(), BenchmarkMCTSPlayer()]
+    #game.play_game(*players)
+minimaxTimeBenchmark = []
+MCTSTimeBenchmark = []
+hybridTimeBenchmark = []
 main()
