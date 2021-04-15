@@ -18,10 +18,10 @@ def write_to_csv(filename, csv_columns, data):
         print("I/O error")
 
 def write_to_csv_l(filename, csv_columns, data):
+    print(data)
     try:
         with open(filename, 'w') as csvfile:
-            writer = csv.writer(csvfile, fieldnames=csv_columns)
-            writer.writeheader()
+            writer = csv.writer(csvfile)
             for i in data:
                 writer.writerow(i)
     except IOError:
@@ -277,16 +277,14 @@ def main():
     # write runtimes to csv
     csv_file ="Runtimes.csv"
     csv_columns = ["Minimax" , "MCTS", "Hybrid"]
-    runtime_list = []
-    for i in range(len(minimaxTimeBenchmark)):
-        runtime_list.append([minimaxTimeBenchmark[i], MCTSTimeBenchmark[i], hybridTimeBenchmark[i]])
-    write_to_csv_l(csv_file , csv_columns)
+    runtime_list = [minimaxTimeBenchmark, MCTSTimeBenchmark, hybridTimeBenchmark]
+    write_to_csv_l(csv_file , csv_columns, runtime_list)
 
     
 
     #players = [BenchmarkMCTSPlayer(), BenchmarkMCTSPlayer()]
     #game.play_game(*players)
-minimaxTimeBenchmark = []
-MCTSTimeBenchmark = []
-hybridTimeBenchmark = []
+minimaxTimeBenchmark = ["Minimax"]
+MCTSTimeBenchmark = ["MCTS"]
+hybridTimeBenchmark = ["Hybrid"]
 main()
