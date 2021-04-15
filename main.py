@@ -215,6 +215,7 @@ def main():
     
     # Minimax vs. MCTS
     mcts_vs_mini = {}
+    data1 = []
     for i in range(0):
         players = [MinimaxBenchmarkPlayer(), BenchmarkMCTSPlayer()]
         retval = game.play_game(*players)
@@ -226,11 +227,13 @@ def main():
     # write w/l results to csv
     csv_file = "Minimax vs MCTS.csv"
     csv_columns = list(mcts_vs_mini.keys())
-    write_to_csv(csv_file, csv_columns, mcts_vs_mini)
+    data1.append(mcts_vs_mini)
+    write_to_csv(csv_file, csv_columns, data1)
 
     # Minimax vs. Hybrid
     mini_vs_hybrid = {}
-    for j in range(1):
+    data2 = []
+    for j in range(0):
         players = [MinimaxBenchmarkPlayer(), HybridPlayer()]
         retval = game.play_game(*players)
         if retval[0] not in mini_vs_hybrid:
@@ -241,10 +244,12 @@ def main():
     # write w/l results to csv
     csv_file = "Minimax vs Hybrid.csv"
     csv_columns = list(mini_vs_hybrid.keys())
-    write_to_csv(csv_file, csv_columns, mini_vs_hybrid)
+    data2.append(mini_vs_hybrid)
+    write_to_csv(csv_file, csv_columns, data2)
 
     # MCTS vs. Hybrid
     mcts_vs_hybrid = {}
+    data3 = []
     for k in range(1):
         players = [HybridPlayer(), BenchmarkMCTSPlayer()]
         retval = game.play_game(*players)
@@ -256,7 +261,8 @@ def main():
     # write w/l results to csv
     csv_file = "MCTS vs Hybrid.csv"
     csv_columns = list(mcts_vs_hybrid.keys())
-    write_to_csv(csv_file, csv_columns, mcts_vs_hybrid)
+    data3.append(mcts_vs_hybrid)
+    write_to_csv(csv_file, csv_columns, data3)
 
     # write runtimes to csv
     csv_file ="Runtimes.csv"
