@@ -17,6 +17,16 @@ def write_to_csv(filename, csv_columns, data):
     except IOError:
         print("I/O error")
 
+def write_to_csv_l(filename, csv_columns, data):
+    try:
+        with open(filename, 'w') as csvfile:
+            writer = csv.writer(csvfile, fieldnames=csv_columns)
+            writer.writeheader()
+            for i in data:
+                writer.writerow(i)
+    except IOError:
+        print("I/O error")
+
 class TicTacToe3D(Game):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -270,7 +280,7 @@ def main():
     runtime_list = []
     for i in range(len(minimaxTimeBenchmark)):
         runtime_list.append([minimaxTimeBenchmark[i], MCTSTimeBenchmark[i], hybridTimeBenchmark[i]])
-    write_to_csv(csv_file , csv_columns)
+    write_to_csv_l(csv_file , csv_columns)
 
     
 
